@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CCNA Config Generator – Mohamed Ibrahim</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;background:#696c62;color:#333}
+    header{background:#3deebc;color:#fff;padding:20px 0;text-align:center}
+    header h1{margin:0;font-size:1.6em}
+    header p{margin:5px 0 0;font-size:0.95em}
+    .container{max-width:900px;margin:20px auto;padding:0 15px}
+    fieldset{background:#fff;border:1px solid #ccc;border-radius:6px;margin-bottom:15px;padding:15px}
+    legend{font-weight:bold;padding:0 5px}
+    label{display:inline-block;width:160px;margin:6px 0}
+    input[type=text],input[type=password],select{width:200px;padding:4px}
+    button{padding:8px 18px;margin:8px 4px 0 0;border:none;border-radius:4px;background:#002b5c;color:#fff;cursor:pointer}
+    button:hover{background:#004a92}
+    pre{background:#eef;border:1px solid #ccc;border-radius:4px;padding:12px;font-size:0.9em;white-space:pre-wrap}
+    footer{text-align:center;font-size:0.8em;color:#666;padding:20px 0}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>CCNA Config Generator</h1>
+  <p>
+    Crafted by <strong>Mohamed Ibrahim</strong> &nbsp;|&nbsp;
+    <a href="https://mohamedibrahimi.netlify.app" style="color:#fff">Portfolio</a> &nbsp;|&nbsp;
+    <a href="mailto:mohamed.a.s.ibrahim.9.2.i@gmail.com" style="color:#fff">Email</a> &nbsp;|&nbsp;
+    WhatsApp: +601127246607
+  </p>
+</header>
+
+<div class="container">
+  <fieldset>
+    <legend>Basic Device Info</legend>
+    <label>Hostname:</label><input type="text" id="host" placeholder="Switch01"><br>
+    <label>Enable Secret:</label><input type="password" id="enSec" placeholder="CCNA123!"><br>
+    <label>Console Password:</label><input type="password" id="conPass" placeholder="CiscoCon"><br>
+    <label>Vty Password:</label><input type="password" id="vtyPass" placeholder="CiscoVTY"><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>Management VLAN (SVI)</legend>
+    <label>VLAN ID:</label><input type="text" id="mgmtVlan" value="99"><br>
+    <label>SVI IP / Mask:</label><input type="text" id="mgmtIP" placeholder="192.168.99.10 255.255.255.0"><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>User Account (local)</legend>
+    <label>Username:</label><input type="text" id="user" value="admin"><br>
+    <label>Password:</label><input type="password" id="userPass" placeholder="LocalPass123"><br>
+    <label>Privilege Level:</label>
+    <select id="priv"><option value="15">15</option><option value="1">1</option></select><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>SSH / Crypto (basic)</legend>
+    <label>Domain-name:</label><input type="text" id="domain" placeholder="ccnalab.local"><br>
+    <label>SSH version:</label>
+    <select id="sshVer"><option value="2">2</option><option value="1">1</option></select><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>Access Ports (VLANs)</legend>
+    <label>Native / User VLAN:</label><input type="text" id="userVlan" value="10"><br>
+    <label>Voice VLAN (optional):</label><input type="text" id="voiceVlan" placeholder="20"><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>Trunk Port (to router / core)</legend>
+    <label>Trunk Interface:</label><input type="text" id="trunkInt" placeholder="g0/1"><br>
+  </fieldset>
+
+  <fieldset>
+    <legend>Static Default Route</legend>
+    <label>Next-Hop (Router IP):</label><input type="text" id="gwIP" placeholder="192.168.99.1"><br>
+  </fieldset>
+
+  <div style="text-align:center">
+    <button onclick="genConfig()">Generate Config</button>
+    <button onclick="copyConfig()">Copy to Clipboard</button>
+  </div>
+
+  <pre id="output">Generated config will appear here...</pre>
+</div>
+
+<footer>
+  © 2025 Mohamed Ibrahim – Network Engineer | 12 yrs carrier-grade infra | XGS-PON • Wi-Fi 7 • MPLS • Python Automation
+</footer>
+
+<script>
+  function genConfig(){
+    const h   = document.getElementById('host').value.trim() || 'Switch';
+    const en  = document.getElementById('enSec').value.trim() || 'CCNA123';
+    const con = document.getElementById('conPass').value.trim() || 'ConPass';
+    const vty = document.getElementById('vtyPass').value.trim() || 'VtyPass';
+    const mgmtVlan = document.getElementById('mgmtVlan').value.trim() || '99';
+    const mgmtIP = document.getElementById('mgmtIP').value.trim() || '192.168.99.10 255.255.255.0';
+    const user = document.getElementById('user').value.trim() || 'admin';
+    const upass= document.getElementById('userPass').value.trim() || 'UserPass123';
+    const priv = document.getElementById('priv').value;
+    const dom  = document.getElementById('domain').value.trim() || 'ccnalab.local';
+    const sshV = document.getElementById('sshVer').value;
+    const userVlan = document.getElementById('userVlan').value.trim() || '10';
+    const voiceVlan= document.getElementById('voiceVlan').value.trim();
+    const trunkInt = document.getElementById('trunkInt').value.trim() || 'g0/1';
+    const gwIP = document.getElementById('gwIP').value.trim() || '192.168.99.1';
+
+    const cfg = `! ${h} – Basic CCNA-level config
+hostname ${h}
+!
+enable secret ${en}
+!
+ip domain-name ${dom}
+crypto key gen rsa mod 1024
+ip ssh version ${sshV}
+!
+username ${user} privilege ${priv} secret ${upass}
+!
+line con 0
+ password ${con}
+ login
+line vty 0 15
+ password ${vty}
+ login local
+ transport input ssh
+!
+vlan ${mgmtVlan}
+ name MGMT
+vlan ${userVlan}
+ name USER
+${voiceVlan ? `vlan ${voiceVlan}\n name VOICE\n` : ''}!
+interface vlan ${mgmtVlan}
+ ip address ${mgmtIP}
+ no shut
+!
+ip default-gateway ${gwIP}
+!
+interface range fa0/1-24
+ switchport mode access
+ switchport access vlan ${userVlan}
+${voiceVlan ? ` switchport voice vlan ${voiceVlan}\n` : ''} spanning-tree portfast
+!
+interface ${trunkInt}
+ switchport mode trunk
+${voiceVlan ? ` switchport trunk allowed vlan ${mgmtVlan},${userVlan},${voiceVlan}\n` : ` switchport trunk allowed vlan ${mgmtVlan},${userVlan}\n`}!
+banner motd # Authorised access only – Mohamed Ibrahim CCNA Lab #
+!
+end
+`;
+    document.getElementById('output').textContent = cfg;
+  }
+
+  function copyConfig(){
+    const txt = document.getElementById('output').textContent;
+    navigator.clipboard.writeText(txt).then(()=>alert('Config copied!'));
+  }
+</script>
+
+</body>
+</html>
